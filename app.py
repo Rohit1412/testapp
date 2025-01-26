@@ -685,12 +685,24 @@ def find_free_port(start_port=5000):
                 port += 1
         raise RuntimeError("No free ports available")
 
+def get_local_ip():
+    """Get the local IP address of the machine"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+        return local_ip
+    except Exception:
+        return "localhost"
+
 def main():
     try:
         port = find_free_port()
         app = create_app()
-        print(f"Starting server on port {port}")
-        app.run(host='0.0.0.0', port=port)
+        local_ip = get_local_ip()
+        print(f"Starting server on http://{local_ip}:{port}")
+        app.run(host='0.0.0.0', port=port)  # Changed host to '0.0.0.0' to allow external access
     except Exception as e:
         print(f"Failed to start server: {e}")
         import sys

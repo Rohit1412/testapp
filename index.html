@@ -3,224 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Camera Stream Manager</title>
+    <title>Camera Manager</title>
     <style>
-        :root {
-            --primary-color: #2196F3;
-            --danger-color: #f44336;
-            --success-color: #4CAF50;
-            --sidebar-width: 300px;
-            --header-height: 60px;
-        }
+        
+:root {
+    --primary-color: #1b263b;
+    --danger-color: #f44336;
+    --success-color: #4CAF50;
+    --sidebar-width: 300px;
+    --header-height: 60px;
+}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh;
-        }
+body {
+    font-family: Arial, sans-serif;
+    background: #0d1b2a;
+    min-height: 100vh;
+}
 
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: var(--header-height);
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 100;
-        }
+.header {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    height: var(--header-height);
+    background: var(--primary-color);
+    color: #e0e1dd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+    border-radius: 10px;
+}
 
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: var(--header-height);
-            bottom: 0;
-            width: var(--sidebar-width);
-            background: white;
-            padding: 20px;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 99;
-            overflow-y: auto;
-        }
+.sidebar {
+    position: fixed;
+    left: 10px;
+    top: 80px;
+    bottom: 10px;
+    width: var(--sidebar-width);
+    background: #1b263b;
+    padding: 20px;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 99;
+    overflow-y: auto;
+    border-radius: 10px;
+    
+}
 
-        .sidebar.open {
-            transform: translateX(0);
-        }
+.sidebar.open {
+    transform: translateX(0);
+}
 
-        .main-content {
-            margin-top: var(--header-height);
-            padding: 20px;
-            transition: margin-left 0.3s ease;
-        }
+.main-content {
+    margin-top: var(--header-height);
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+}
 
-        .main-content.sidebar-open {
-            margin-left: var(--sidebar-width);
-        }
+.main-content.sidebar-open {
+    margin-left: var(--sidebar-width);
+}
 
-        .camera-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-            max-width: none;
-            margin: 0 auto;
-        }
+.camera-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(640px, 1fr));
+    gap: 24px;
+    padding: 24px;
+    max-width: none;
+    margin: 0 auto;
+}
 
-        .camera-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow: hidden;
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            resize: both;
-            min-width: 300px;
-            min-height: 300px;
-        }
+.camera-container {
+    background: #e0e1dd;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-width: 640px;
+    min-height: 480px;
+    width: 640px;
+    height: 480px;
+    transition: box-shadow 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.08);
+}
 
-        .camera-header {
-            padding: 15px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #eee;
-        }
+.camera-container:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,0.16);
+}
 
-        .camera-stream {
-            width: 100%;
-            flex: 1;
-            object-fit: contain;
-            background: #000;
-            max-height: calc(100% - 150px);
-        }
+.camera-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
 
-        .camera-controls {
-            padding: 10px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
+.camera-header h1 {
+    font-size: 1.1rem;
+    color: #1a1a1a;
+    font-weight: 600;
+}
 
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
+.camera-stream-wrapper {
+    position: relative;
+    flex: 1;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    min-height: 360px;
+}
 
-        .btn:hover {
-            opacity: 0.9;
-        }
+.camera-stream {
+    position: absolute;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
 
-        .btn-record { background: var(--success-color); }
-        .btn-stop { background: var(--danger-color); }
-        .btn-remove { background: #607D8B; }
+.camera-controls {
+    padding: 12px 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
 
-        .metrics {
-            padding: 10px;
-            font-size: 0.85em;
-        }
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #e0e1dd;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
 
-        .add-camera-form {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-        }
+.btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+.btn:active {
+    transform: translateY(0);
+}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
+.btn-record { background: var(--success-color); }
+.btn-stop { background: var(--danger-color); }
+.btn-remove { background: #607D8B; }
 
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+.metrics {
+    padding: 12px 20px;
+    font-size: 0.9em;
+    color: #666;
+    background: #f8f9fa;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
 
-        .error-message {
-            background: #ffebee;
-            color: var(--danger-color);
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-            display: none;
-        }
+.add-camera-form {
+    background: #1b263b;
+    padding: 10px;
+    border-radius: 8px;
+}
 
-        .toggle-btn {
-            background: #1565C0;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
+.form-group {
+    margin-bottom: 15px;
+}
 
-        .toggle-btn:hover {
-            background: #0D47A1;
-        }
+.add-camera-title-header {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: #e0e1dd;
+    font-weight: normal;
+    align-items: center;
+    gap: 10px;
+}
 
-        .resize-handle {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 20px;
-            height: 20px;
-            cursor: se-resize;
-            background: linear-gradient(135deg, transparent 50%, var(--primary-color) 50%);
-            z-index: 10;
-        }
+.add-camera-title {
+    color: #e0e1dd;
+    font-weight: normal;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
 
-        @media (max-width: 768px) {
-            .camera-grid {
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                padding: 10px;
-            }
+.instructions {
+    color: #e0e1dd;
+    font-weight: normal;
+    margin-bottom: 20px;
+}
 
-            .camera-container {
-                aspect-ratio: 1;
-            }
-        }
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: normal;
+    color: #e0e1dd;
+}
 
-        @media (min-width: 1200px) {
-            .camera-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.error-message {
+    background: #fff3f3;
+    color: var(--danger-color);
+    padding: 12px 20px;
+    margin: 0;
+    border-top: 1px solid rgba(244, 67, 54, 0.1);
+    font-size: 0.9em;
+    display: none;
+}
+
+.toggle-btn {
+    background: #1565C0;
+    color: #e0e1dd;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: medium;
+    transition: background-color 0.2s;
+}
+
+.toggle-btn:hover {
+    background: #0da121;
+}
+
+.resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    cursor: se-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--primary-color) 50%);
+    z-index: 10;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.resize-handle:hover {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .camera-grid {
+        grid-template-columns: 1fr;
+        padding: 12px;
+    }
+
+    .camera-container {
+        min-width: 320px;
+        width: 100%;
+        height: auto;
+    }
+}
+
+@media (min-width: 1920px) {
+    .camera-grid {
+        grid-template-columns: repeat(auto-fit, minmax(640px, 1fr));
+    }
+}
+
+.btn i {
+    margin-right: 8px;
+}
+
+.btn-record.recording {
+    background: var(--danger-color);
+}
+
+.btn-record:not(.recording) {
+    background: var(--success-color);
+}
+
+@media (max-width: 768px) {
+    :root {
+        --header-height: 50px;
+        --sidebar-width: 100%;
+    }
+
+    .header {
+        top: 0;
+        left: 0;
+        right: 0;
+        border-radius: 0;
+        padding: 0 10px;
+    }
+
+    .header h1 {
+        font-size: 1rem;
+        margin: 0 10px;
+    }
+
+    .toggle-btn {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .sidebar {
+        top: var(--header-height);
+        width: 100%;
+        padding: 15px;
+    }
+
+    .main-content {
+        padding: 10px;
+        margin-top: var(--header-height);
+    }
+
+    .camera-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 12px 10px;
+    }
+
+    .camera-container {
+        min-width: 100%;
+        width: 100%;
+        height: auto;
+        min-height: 300px;
+        border-radius: 8px;
+    }
+
+    .camera-header {
+        padding: 10px 15px;
+    }
+
+    .camera-header h3 {
+        font-size: 1rem;
+    }
+
+    .camera-controls {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 10px 15px;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    .metrics {
+        padding: 10px 15px;
+        font-size: 0.8rem;
+    }
+
+    .resize-handle {
+        width: 12px;
+        height: 12px;
+    }
+
+    /* Mobile-specific touch improvements */
+    button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .camera-stream-wrapper {
+        min-height: 250px;
+    }
+
+    .add-camera-form {
+        padding: 15px;
+    }
+
+    .form-group input {
+        padding: 10px;
+    }
+}
+
+/* Additional mobile-first improvements */
+@media (hover: none) {
+    .btn:hover {
+        transform: none;
+        opacity: 1;
+    }
+    
+    .camera-container:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+}
+
+/* Ensure proper viewport scaling */
+@viewport {
+    width: device-width;
+    zoom: 1.0;
+}
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="header">
-        <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
-        <h1 style="margin-left: 20px">Multi-Camera Stream Manager</h1>
+        <h1 style="margin-left: 20px; margin-right: 20px; font-size: large;">Multi-Camera Manager</h1>
+        <div style="display: flex;">
+            <button class="toggle-btn" onclick="toggleSidebar()">
+                <i class="fas fa-camera icon"></i>
+                Add Camera</button>
+            <button class="toggle-btn" onclick="window.location.href='history.html'" style="margin-left: 20px;"> 
+                <i class="fas fa-history icon"></i> 
+                History</button>
+            <button class="toggle-btn" onclick="window.location.href='recordings.html'" style="margin-left: 20px;"> 
+                    <i class="fas fa-video icon"></i> 
+                    Recording</button>
+            <button class="toggle-btn" onclick="window.location.href='index.html'" style="margin-left: 20px;"> 
+                <i class="fas fa-home icon"></i> 
+                Home</button>
+        </div>
     </div>
 
     <div class="sidebar">
         <div class="add-camera-form">
-            <h3>Add New Camera</h3>
+            <div class="add-camera-title-header">
+                <i class="fas fa-camera icon"></i>
+                <h3> Add New Camera </h3>
+            </div>
             <form id="addCameraForm" onsubmit="return false;">
                 <div class="form-group">
                     <label for="newCameraSource">Camera Source:</label>
@@ -242,216 +465,331 @@
     <div class="main-content">
         <div id="cameras" class="camera-grid"></div>
     </div>
-
     <script>
-        const websockets = new Map();
-        const canvasContexts = new Map();
+    // Get the current hostname or IP address
+    const currentHost = window.location.hostname;
+    const currentPort = window.location.port;
+    
+    // Use this to create WebSocket URLs
+    function getWebSocketUrl(camera_id) {
+        // Use wss:// for https, ws:// for http
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        return `${protocol}${currentHost}:${currentPort}/stream/${camera_id}`;
+    }
+    
+    // Use this function when creating WebSocket connections
+    // const ws = new WebSocket(getWebSocketUrl(camera_id));
 
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('open');
-            document.querySelector('.main-content').classList.toggle('sidebar-open');
-        }
+    const websockets = new Map();
+    const canvasContexts = new Map();
 
-        async function addCamera() {
-            const source = document.getElementById('newCameraSource').value;
-            const name = document.getElementById('newCameraName').value || 'default';
-            const fps = document.getElementById('newCameraFPS').value;
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('open');
+        document.querySelector('.main-content').classList.toggle('sidebar-open');
+    }
 
-            try {
-                const response = await fetch('/add_camera', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        source: isNaN(source) ? source : parseInt(source),
-                        name: name,
-                        max_fps: parseInt(fps)
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.status === 'success') {
-                    createCameraElement(data.camera_id, name);
-                    initializeStream(data.camera_id);
-                }
-            } catch (error) {
-                console.error('Failed to add camera:', error);
-            }
-        }
+    async function addCamera() {
+        const source = document.getElementById('newCameraSource').value;
+        const name = document.getElementById('newCameraName').value || 'default';
+        const fps = document.getElementById('newCameraFPS').value;
 
-        function createCameraElement(cameraId, name) {
-            const camerasDiv = document.getElementById('cameras');
-            const cameraHtml = `
-                <div class="camera-container" id="camera-${cameraId}">
-                    <div class="camera-header">
-                        <h3>${name} (ID: ${cameraId})</h3>
-                    </div>
-                    <canvas id="stream-${cameraId}" class="camera-stream"></canvas>
-                    <div class="error-message" id="error-${cameraId}"></div>
-                    <div class="camera-controls">
-                        <button class="btn btn-record" onclick="startRecording(${cameraId})">Start Recording</button>
-                        <button class="btn btn-stop" onclick="stopRecording(${cameraId})">Stop Recording</button>
-                        <button class="btn btn-remove" onclick="removeCamera(${cameraId})">Remove Camera</button>
-                    </div>
-                    <div class="metrics">
-                        <p>Status: <span id="status-${cameraId}">Active</span></p>
-                    </div>
-                    <div class="resize-handle"></div>
-                </div>
-            `;
-            camerasDiv.insertAdjacentHTML('beforeend', cameraHtml);
-            
-            const container = document.getElementById(`camera-${cameraId}`);
-            const resizeObserver = new ResizeObserver(entries => {
-                for (let entry of entries) {
-                    const canvas = entry.target.querySelector('canvas');
-                    if (canvas) {
-                        adjustCanvasSize(canvas, entry.contentRect.width, entry.contentRect.height);
-                    }
-                }
+        try {
+            const response = await fetch('/add_camera', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    source: isNaN(source) ? source : parseInt(source),
+                    name: name,
+                    max_fps: parseInt(fps)
+                })
             });
-            resizeObserver.observe(container);
-        }
-
-        function adjustCanvasSize(canvas, containerWidth, containerHeight) {
-            const availableHeight = containerHeight - 150;
             
-            const aspectRatio = canvas.width / canvas.height;
-            let newWidth = containerWidth;
-            let newHeight = containerWidth / aspectRatio;
-
-            if (newHeight > availableHeight) {
-                newHeight = availableHeight;
-                newWidth = availableHeight * aspectRatio;
+            const data = await response.json();
+            if (data.status === 'success') {
+                createCameraElement(data.camera_id, name);
+                initializeStream(data.camera_id);
             }
-
-            canvas.style.width = `${newWidth}px`;
-            canvas.style.height = `${newHeight}px`;
+        } catch (error) {
+            console.error('Failed to add camera:', error);
         }
+    }
 
-        function initializeStream(cameraId) {
-            const canvas = document.getElementById(`stream-${cameraId}`);
-            const ctx = canvas.getContext('2d');
-            canvasContexts.set(cameraId, ctx);
+    function createCameraElement(cameraId, name) {
+        const camerasDiv = document.getElementById('cameras');
+        const cameraHtml = `
+            <div class="camera-container" id="camera-${cameraId}">
+                <div class="camera-header">
+                    <h3>${name} (ID: ${cameraId})</h3>
+                </div>
+                <div class="camera-stream-wrapper">
+                    <canvas id="stream-${cameraId}" class="camera-stream"></canvas>
+                </div>
+                <div class="error-message" id="error-${cameraId}"></div>
+                <div class="camera-controls">
+                    <button class="btn btn-record" id="record-btn-${cameraId}" onclick="toggleRecording(${cameraId})">
+                        <i class="fas fa-circle"></i>
+                        <span>Start Recording</span>
+                    </button>
+                    <button class="btn btn-remove" onclick="removeCamera(${cameraId})">
+                        <i class="fas fa-trash"></i>
+                        <span>Remove</span>
+                    </button>
+                </div>
+                <div class="metrics">
+                    <p>Status: <span id="status-${cameraId}">Active</span></p>
+                </div>
+                <div class="resize-handle"></div>
+            </div>
+        `;
+        camerasDiv.insertAdjacentHTML('beforeend', cameraHtml);
+        
+        initializeResizing(cameraId);
+    }
 
-            canvas.width = 640;
-            canvas.height = 480;
+    function adjustCanvasSize(canvas, containerWidth, containerHeight) {
+        if (!canvas || !containerWidth || !containerHeight) return;
 
-            const ws = new WebSocket(`ws://${window.location.host}/stream/${cameraId}`);
-            websockets.set(cameraId, ws);
+        const wrapper = canvas.closest('.camera-stream-wrapper');
+        if (!wrapper) return;
 
-            ws.onmessage = async function(event) {
-                const blob = event.data;
-                const img = new Image();
-                img.onload = () => {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                };
-                img.src = URL.createObjectURL(new Blob([blob], { type: 'image/jpeg' }));
-            };
-
-            ws.onerror = function(error) {
-                showError(cameraId, 'Stream connection error');
-            };
-
-            ws.onclose = function() {
-                showError(cameraId, 'Stream connection closed');
-            };
+        const wrapperWidth = wrapper.clientWidth;
+        const wrapperHeight = wrapper.clientHeight;
+        
+        // Maintain aspect ratio
+        const canvasAspectRatio = canvas.width / canvas.height;
+        const wrapperAspectRatio = wrapperWidth / wrapperHeight;
+        
+        let newWidth, newHeight;
+        
+        if (canvasAspectRatio > wrapperAspectRatio) {
+            // Canvas is wider than wrapper
+            newWidth = wrapperWidth;
+            newHeight = wrapperWidth / canvasAspectRatio;
+        } else {
+            // Canvas is taller than wrapper
+            newHeight = wrapperHeight;
+            newWidth = wrapperHeight * canvasAspectRatio;
         }
+        
+        // Apply the new dimensions
+        canvas.style.width = `${newWidth}px`;
+        canvas.style.height = `${newHeight}px`;
+    }
 
-        async function removeCamera(cameraId) {
-            try {
-                const response = await fetch(`/remove_camera/${cameraId}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    if (websockets.has(cameraId)) {
-                        websockets.get(cameraId).close();
-                        websockets.delete(cameraId);
-                    }
-                    document.getElementById(`camera-${cameraId}`).remove();
+    function initializeStream(cameraId) {
+        const canvas = document.getElementById(`stream-${cameraId}`);
+        const ctx = canvas.getContext('2d');
+        canvasContexts.set(cameraId, ctx);
+
+        canvas.width = 640;
+        canvas.height = 480;
+
+        const ws = new WebSocket(getWebSocketUrl(cameraId));
+        websockets.set(cameraId, ws);
+
+        ws.onmessage = async function(event) {
+            const blob = event.data;
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = URL.createObjectURL(new Blob([blob], { type: 'image/jpeg' }));
+        };
+
+        ws.onerror = function(error) {
+            showError(cameraId, 'Stream connection error');
+        };
+
+        ws.onclose = function() {
+            showError(cameraId, 'Stream connection closed');
+        };
+    }
+
+    async function removeCamera(cameraId) {
+        try {
+            // Close WebSocket first
+            if (websockets.has(cameraId)) {
+                const ws = websockets.get(cameraId);
+                ws.close();
+                websockets.delete(cameraId);
+            }
+            
+            // Wait a moment for WebSocket to close
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const response = await fetch(`/remove_camera/${cameraId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                const element = document.getElementById(`camera-${cameraId}`);
+                if (element) {
+                    element.remove();
                 }
-            } catch (error) {
+                
+                // Clean up any observers
+                if (resizeObservers.has(cameraId)) {
+                    resizeObservers.get(cameraId).disconnect();
+                    resizeObservers.delete(cameraId);
+                }
+            } else {
                 showError(cameraId, 'Failed to remove camera');
             }
+        } catch (error) {
+            console.error('Error removing camera:', error);
+            showError(cameraId, 'Failed to remove camera');
         }
+    }
 
-        async function startRecording(cameraId) {
-            try {
-                const response = await fetch('/start_recording', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ camera_id: cameraId })
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
+    async function toggleRecording(cameraId) {
+        const button = document.getElementById(`record-btn-${cameraId}`);
+        const isRecording = button.classList.contains('recording');
+        
+        try {
+            const endpoint = isRecording ? '/stop_recording' : '/start_recording';
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ camera_id: cameraId })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'success') {
+                if (isRecording) {
+                    button.classList.remove('recording');
+                    button.innerHTML = '<i class="fas fa-circle"></i><span>Start Recording</span>';
+                    document.getElementById(`status-${cameraId}`).textContent = 'Active';
+                } else {
+                    button.classList.add('recording');
+                    button.innerHTML = '<i class="fas fa-stop"></i><span>Stop Recording</span>';
                     document.getElementById(`status-${cameraId}`).textContent = 'Recording';
                 }
-            } catch (error) {
-                showError(cameraId, 'Failed to start recording');
             }
+        } catch (error) {
+            showError(cameraId, `Failed to ${isRecording ? 'stop' : 'start'} recording`);
         }
+    }
 
-        async function stopRecording(cameraId) {
-            try {
-                const response = await fetch('/stop_recording', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ camera_id: cameraId })
+    function showError(cameraId, message) {
+        const errorDiv = document.getElementById(`error-${cameraId}`);
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
+
+    // Load existing cameras on page load
+    async function loadExistingCameras() {
+        try {
+            const response = await fetch('/list_cameras');
+            const data = await response.json();
+            if (data.status === 'success') {
+                data.cameras.forEach(camera => {
+                    createCameraElement(camera.id, camera.name);
+                    initializeStream(camera.id);
                 });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    document.getElementById(`status-${cameraId}`).textContent = 'Active';
-                }
-            } catch (error) {
-                showError(cameraId, 'Failed to stop recording');
             }
+        } catch (error) {
+            console.error('Failed to load existing cameras:', error);
         }
+    }
 
-        function showError(cameraId, message) {
-            const errorDiv = document.getElementById(`error-${cameraId}`);
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadExistingCameras();
+        handleResize();
+    });
 
-        // Load existing cameras on page load
-        async function loadExistingCameras() {
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        websockets.forEach(ws => {
             try {
-                const response = await fetch('/list_cameras');
-                const data = await response.json();
-                if (data.status === 'success') {
-                    data.cameras.forEach(camera => {
-                        createCameraElement(camera.id, camera.name);
-                        initializeStream(camera.id);
-                    });
-                }
-            } catch (error) {
-                console.error('Failed to load existing cameras:', error);
+                ws.close();
+            } catch (e) {
+                console.error('Error closing websocket:', e);
             }
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadExistingCameras();
-            handleResize();
         });
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            websockets.forEach(ws => ws.close());
+        resizeObservers.forEach(observer => {
+            try {
+                observer.disconnect();
+            } catch (e) {
+                console.error('Error disconnecting observer:', e);
+            }
         });
+    });
 
-        // Handle window resize
-        function handleResize() {
-            // This can be removed if you want to rely solely on the ResizeObserver
-            // Or keep it for general layout adjustments
+    // Handle window resize
+    function handleResize() {
+        // This can be removed if you want to rely solely on the ResizeObserver
+        // Or keep it for general layout adjustments
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // Add a map to store resize observers
+    const resizeObservers = new Map();
+
+    function initializeResizing(cameraId) {
+        const container = document.getElementById(`camera-${cameraId}`);
+        const handle = container.querySelector('.resize-handle');
+        const canvas = document.getElementById(`stream-${cameraId}`);
+        
+        let isResizing = false;
+        let startWidth, startHeight, startX, startY;
+        
+        handle.addEventListener('mousedown', initResize);
+        
+        function initResize(e) {
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = container.offsetWidth;
+            startHeight = container.offsetHeight;
+            
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+            
+            // Prevent text selection while resizing
+            document.body.style.userSelect = 'none';
+            // Add resizing class for visual feedback
+            container.classList.add('resizing');
         }
-
-        window.addEventListener('resize', handleResize);
+        
+        function resize(e) {
+            if (!isResizing) return;
+            
+            const newWidth = Math.max(640, startWidth + (e.clientX - startX));
+            const newHeight = Math.max(480, startHeight + (e.clientY - startY));
+            
+            container.style.width = `${newWidth}px`;
+            container.style.height = `${newHeight}px`;
+            
+            adjustCanvasSize(canvas, newWidth, newHeight);
+        }
+        
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+            document.body.style.userSelect = '';
+            // Remove resizing class
+            container.classList.remove('resizing');
+        }
+        
+        // Store the observer in the map
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                adjustCanvasSize(canvas, entry.contentRect.width, entry.contentRect.height);
+            }
+        });
+        
+        resizeObserver.observe(container);
+        resizeObservers.set(cameraId, resizeObserver);
+    }
     </script>
 </body>
 </html>
